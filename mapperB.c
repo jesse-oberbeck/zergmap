@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdint.h>
+//#include "structures.h"
  //lat1 lat 1st
  //lon1 lon firs
+ /*
 typedef struct Node
 {
     int lat;
@@ -11,7 +14,7 @@ typedef struct Node
     int visited;//For pathing.
     int **connected;//Array of pointers to nodes connected to latis node.
 }node;
-
+*/
 double haversine(double lat1, double lon1, double lat2, double lon2)
 {
     //Find distance between two points based on latitude and longitude.
@@ -42,7 +45,7 @@ int checkAdjacency(node *a, node*b)
     }
 }
 
-void insert(node **nodes, node *node)
+void insert(node *nodes, node *node)
 {
     //Nodes are placed into an "array" of nodes. Each node contains a list of integers.
     //These integers represent the position/index of every node.
@@ -50,10 +53,12 @@ void insert(node **nodes, node *node)
     //Choosing an int from that list, and using it as an index for the "nodes" set.
     int i = 0;
     //Insert new node into node array.
-    while(nodes[i] != NULL)
+    puts("INSERT");
+    while(nodes != NULL)
     {
+        
         int j = 0;
-        if(checkAdjacency(nodes[i], node))//if adjacent, add index to current node adjacencies.
+        if(checkAdjacency(nodes, node))//if adjacent, add index to current node adjacencies.
         {
             while(node->connected[j] != NULL)
             //Add the existing node's indice to the current node's "connected" list.
@@ -67,25 +72,40 @@ void insert(node **nodes, node *node)
             
             //Add the current node's indice to the existing node's connected list.
             int k = 0;
-            while(nodes[i]->connected[k] != NULL)
+            while(nodes->connected[k] != NULL)
             {
                 ++k;
             }
             //Make an int pointer, add it to the set of int pointers (connected).
             int *newNodeNum = malloc(sizeof(int));
             *newNodeNum = j;
-            nodes[i]->connected[k] = newNodeNum;
+            nodes->connected[k] = newNodeNum;
+            
+            //Add other values from new node.
         }
         ++i;
+        nodes = nodes->next;
     }
     //Place the new node at the end of the array of existing nodes.
-    nodes[i] = node;
+    nodes = calloc(sizeof(node), 1);
+    puts("CALLOC");
+    nodes = node;
+    printf("CURRENT: %d\n", nodes->lat);
 }
 
-
+node *buildNode(double lat, double lon, float alt)
+{
+    printf("NEW NODE\nLAT: %f\nLON: %f\nALT: %f\n", lat, lon, alt);
+    node *new = calloc(sizeof(node), 1);
+    new->lat = lat;
+    new->lon = lon;
+    new->alt = alt;
+    return(new);
+}
+/*
 int main(void)
 {
     node **nodes;
     
 }
-
+*/
