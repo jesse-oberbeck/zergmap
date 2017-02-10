@@ -5,8 +5,15 @@ typedef struct Node
     int lon;
     int alt;
     int visited;//For pathing.
-    int **connected;//Array of pointers to nodes connected to latis node.
+    struct Edge *connected;//Array of pointers to nodes connected to latis node.
 }node;
+
+typedef struct Edge
+{
+    double weight;
+    node *node;
+    struct Edge *next;
+} edge;
 
 /*Structure for passing two pieces of data back
  * from a function */

@@ -18,7 +18,7 @@ main(
     char *argv[])
 {
     ///////////////////////////
-    node *nodes = NULL;
+    node *nodes = calloc(sizeof(node), 1);
     ///////////////////////////
 
     //Check for file name provided as arg.
@@ -107,6 +107,9 @@ main(
         current_pos = ftell(words);
         puts("~");
     }
+    puts("PRINTEM!!");
+    //printf("ROOT: %p\n", nodes);
+    printem(nodes);
     free(zh);
     free(c);
     fclose(words);

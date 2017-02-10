@@ -171,86 +171,6 @@ extract(
 }
 
 void
-zerg1Encode(
-    char **lines,
-    FILE * packet)
-{
-    /*Encoder for status type packets. Extracts values from a
-     * properly formatted set of values in the user given file. */
-
-    if (strstr(lines[4], "Name") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[5], "HP") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[6], "Type") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[7], "Armor") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[8], "Max Speed") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-
-
-    struct Status *st = calloc(sizeof(*st), 1);
-    char *name = extract(lines[4]);
-
-    char *totalHp = extract(lines[5]);
-    int remaining_hp = getValue(totalHp);
-    int maxHp = getValue(extract(totalHp));
-
-    st->HP = htonl(remaining_hp) >> 8;
-    st->MaxHP = htonl(maxHp) >> 8;
-    char *unitType = extract(lines[6]);
-
-    const char *typeArray[] =
-        { "Overmind", "Larva", "Cerebrate", "Overlord", "Queen", "Drone",
-        "Zergling", "Lurker", "Broodling", "Hydralisk", "Guardian", "Scourge",
-        "Ultralisk",
-        "Mutalisk", "Defiler", "Devourer"
-    };
-    int type = 0;
-
-    for (int i = 0; i < 16; ++i)
-    {
-        if (strcmp(typeArray[i], unitType) == 0)
-        {
-            type = i;
-            break;
-        }
-    }
-    st->Type = htonl(type) >> 24;
-
-    int armor = getValue(lines[7]);
-
-    st->Armor = htonl(armor) >> 24;
-
-    float speed = getFValue(lines[8]);
-    uint32_t packSpeed = htonl(reverseConvert32(speed));
-
-    st->Speed = packSpeed;
-
-    fwrite(st, 12, 1, packet);
-    fwrite(name, strlen(name), 1, packet);
-    free(st);
-    return;
-
-}
-
-void
 zerg2Decode(
     FILE * words)
 {
@@ -334,70 +254,6 @@ zerg2Decode(
 }
 
 int
-zerg2Encode(
-    char **lines)
-{
-    /*Encoder for Status type packets. Matches strings found in
-     * the packet, and returns the command number associated so that
-     * it may be written to the pcap file. */
-    struct Command *cm = calloc(sizeof(*cm), 1);
-    char *comm = lines[4];
-    int commandNum = 0;
-
-    if ((strcmp(comm, "GET_STATUS") == 0) ||
-        (strcmp(comm, "GET_STATUS\n") == 0))
-    {
-    }
-
-    else if ((strcmp(comm, "GOTO") == 0) || (strcmp(comm, "GOTO\n") == 0))
-    {
-        commandNum = 1;
-    }
-
-    else if ((strcmp(comm, "GET_GPS") == 0) ||
-             (strcmp(comm, "GET_GPS\n") == 0))
-    {
-        commandNum = 2;
-    }
-
-    else if ((strcmp(comm, "RESERVED") == 0) ||
-             (strcmp(comm, "RESERVED\n") == 0))
-    {
-        commandNum = 3;
-    }
-
-    else if ((strcmp(comm, "RETURN") == 0) || (strcmp(comm, "RETURN\n") == 0))
-    {
-        commandNum = 4;
-    }
-
-    else if ((strcmp(comm, "SET_GROUP") == 0) ||
-             (strcmp(comm, "SET_GROUP\n") == 0))
-    {
-        commandNum = 5;
-    }
-
-    else if ((strcmp(comm, "STOP") == 0) || (strcmp(comm, "STOP\n") == 0))
-    {
-        commandNum = 6;
-    }
-
-    else if ((strcmp(comm, "REPEAT") == 0) || (strcmp(comm, "REPEAT\n") == 0))
-    {
-        commandNum = 7;
-    }
-
-    else
-    {
-        free(cm);
-        return (-1);
-    }
-
-    free(cm);
-    return (commandNum);
-}
-
-int
 minutes(
     double coordinate)
 {
@@ -461,97 +317,17 @@ zerg3Decode(
     float accuracy = convert32(accuracyBin);
 
     printf("Altitude: %.1fm\n", altitude * 1.8288); //Multiplying by 1.8288 to convert fathoms to meters.
-    printf("Bearing: %f deg\n", bearing);
-    printf("Speed: %.0fkm/h\n", speed * 3.6);   //3.6 to convert m/s to km/h.
-    printf("Accuracy: %.0fm\n", accuracy);
-    //printf("\nLatitude Degrees: %i \nMinutes: %i \nSeconds: %i\n\n",
-           //(int) latitude, minutes(latitude), seconds(latitude));
-    //printf("Longitude Degrees: %i \nMinutes: %i \nSeconds: %i\n",
-           //(int) longitude, minutes(longitude), seconds(longitude));
+    //printf("Bearing: %f deg\n", bearing);
+    //printf("Speed: %.0fkm/h\n", speed * 3.6);   //3.6 to convert m/s to km/h.
+    //printf("Accuracy: %.0fm\n", accuracy);
+
 //  Build node  //
-    node *new = calloc(sizeof(node), 1);
+    node *new = NULL;
     new = buildNode(latitude, longitude, altitude * 1.8288);
-    insert(nodes, new);
+    insert(&nodes, new);
+    findAdjacencies(nodes, new);
 //  Build node  //
     free(gps);
-}
-
-void
-zerg3Encode(
-    char **lines,
-    FILE * packet)
-{
-    /*Encoder for GPS type packet. First checks for presence
-     * of correct lines in encode file, then extracts values
-     * and writes them to the pcap file. */
-    struct GPS *gps = calloc(sizeof(*gps), 1);
-
-    if (strstr(lines[4], "Latitude") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[5], "Longitude") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[6], "Altitude") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[7], "Bearing") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[8], "Speed") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-    if (strstr(lines[9], "Accuracy") == NULL)
-    {
-        fprintf(stderr, "Incorrect packet instruction.\n");
-        exit(1);
-    }
-
-    double lat = getDValue(lines[4]);
-    double lon = getDValue(lines[5]);
-
-    if (strstr(lines[4], "S") != NULL)
-    {
-        lat = lat * -1;
-    }
-
-    if (strstr(lines[5], "W") == NULL)
-    {
-        lon = lon * -1;
-    }
-
-    float alt = getFValue(lines[6]) * .546807;
-    float bear = getFValue(lines[7]);
-    float speed = getFValue(lines[8]) * .277778;
-    float acc = getFValue(lines[9]);
-
-    uint64_t latBin = be64toh(reverseConvert64(lat));
-    uint64_t lonBin = be64toh(reverseConvert64(lon));
-    uint32_t altBin = htonl(reverseConvert32(alt));
-    uint32_t bearBin = htonl(reverseConvert32(bear));
-    uint32_t speedBin = htonl(reverseConvert32(speed));
-    uint32_t accBin = htonl(reverseConvert32(acc));
-
-    gps->Longit = lonBin;
-    gps->Latit = latBin;
-    gps->Altit = altBin;
-    gps->Bearing = bearBin;
-    gps->Speed = speedBin;
-    gps->Acc = accBin;
-
-    fwrite(gps, 32, 1, packet);
-    free(gps);
-    return;
 }
 
 void
