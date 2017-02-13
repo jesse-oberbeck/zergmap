@@ -1,6 +1,11 @@
 typedef struct Node
 {
     struct Node *next;
+    struct Node *left;
+    struct Node *right;
+    int HP;
+    int MAXHP;
+    int ID;
     int lat;
     int lon;
     int alt;

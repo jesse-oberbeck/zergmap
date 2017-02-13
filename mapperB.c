@@ -2,19 +2,34 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
-//#include "structures.h"
- //lat1 lat 1st
- //lon1 lon firs
- /*
-typedef struct Node
+
+void packetTree(node *tree, node *node)
 {
-    int lat;
-    int lon;
-    int alt;
-    int visited;//For pathing.
-    int **connected;//Array of pointers to nodes connected to latis node.
-}node;
-*/
+    if(tree == NULL)
+    {
+        tree = node;
+    }
+    if(node->ID == tree->ID)
+    {
+        if(tree->HP < 0)
+        {
+            tree->HP = node->HP;
+        }
+        else if(node->HP < 0)
+        {
+            node->HP = tree->HP;
+        }
+    }
+    else if(node->ID < tree->ID)
+    {
+        packetTree(tree->left, node);
+    }
+    else
+    {
+        packetTree(tree->right, node);
+    }
+}
+
 double haversine(double th1, double ph1, double th2, double ph2)
 {
 	double dx, dy, dz;
@@ -34,6 +49,8 @@ int checkAdjacency(node *a, node*b)
     //Also serves as a simplified yes/no check for "is in range."
     int dist = haversine(a->lat, a->lon, b->lat, b->lon);
     //printf("dist: %d\n", dist);
+    int altDif = a->alt - b->alt;
+    dist = sqrt( pow(altDif, 2) + pow(dist, 2) );
     if(dist < 15)
     {
         return(dist);
@@ -43,56 +60,6 @@ int checkAdjacency(node *a, node*b)
         return(0);
     }
 }
-/*
-void insert(node *nodes, node *node)
-{
-    //Nodes are placed into an "array" of nodes. Each node contains a list of integers.
-    //These integers represent the position/index of every node.
-    //This is done so that a path can be followed by checking a node's "connected" field,
-    //Choosing an int from that list, and using it as an index for the "nodes" set.
-    int i = 0;
-    //Insert new node into node array.
-    puts("INSERT");
-    while(nodes->next != NULL)
-    {
-        int j = 0;
-        if(checkAdjacency(nodes, node))//if adjacent, add index to current node adjacencies.
-        {
-            while(node->connected[j] != NULL)
-            //Add the existing node's indice to the current node's "connected" list.
-            {
-                ++j;
-            }
-            //Make an int pointer, add it to the set of int pointers (connected).
-
-            node->connected[j] = i;
-            
-            //Add the current node's indice to the existing node's connected list.
-            int k = 0;
-            while(nodes->connected[k] != NULL)
-            {
-                ++k;
-            }
-            //Make an int pointer, add it to the set of int pointers (connected).
-
-            nodes->connected[k] = j;
-            //Add other values from new node.
-        }
-        ++i;
-        puts("MOVING OVER A NODE~~~~~~~~~~~~~~~~~~~");
-        nodes = nodes->next;
-    }
-    //Place the new node at the end of the array of existing nodes.
-    if(nodes == NULL)
-    {
-        puts("GOT A NULL");
-    }
-    //nodes->next = calloc(sizeof(node), 1);
-    nodes->next = node;
-    printf("CURRENT: %d\n", nodes->next->alt);
-}
-*/
-
 
 
 void insert(node **nodes, node *node)
@@ -110,30 +77,70 @@ void insert(node **nodes, node *node)
     }
     (*nodes)->next = node;
 }
+
+void scrollNodes(node *list, node *cur, void(*func)(node *list, node *cur))
+{
+    int count = 0;
+    while(cur != NULL)
+    {
+        printf("SCROLL #%d\n", count);
+        func(list, cur);
+        cur = cur->next;
+        ++count;
+    }
+}
+
 //TODO: FIX THIS CRAP
 void findAdjacencies(node *cur, node *new)
 {
+
     while(cur != NULL)//While not at the end of the set of existing nodes.
     {
-        edge *edgeCursor = cur->connected;
-        edge *edgeCursorNew = new->connected;
-        int weight = checkAdjacency(cur, new);
-        printf("adj check: %d\n", weight);
-        if(weight > 1 && weight < 16)
+        edge *edgeCursor = cur->connected;//is now the first edge for the node, or NULL
+        edge *edgeCursorNew = new->connected;//Same, but for the new node.
+        int weight = checkAdjacency(cur, new);//Find weight.
+        //printf("adj check: %d\n", weight);
+
+        if(weight > 1 && weight < 16)//If the weight comes back in the correct range...
         {
-            //Move to the end of the edges of the current node in the root set.
+            //Handle/add first edge.
+            if(edgeCursor == NULL)
+            {
+                puts("First Edge");
+                edge *e = calloc(sizeof(edge), 1);
+                e->node = new;
+                e->weight = weight;
+                e->next = NULL;
+                cur->connected = e;
+                edgeCursor = cur->connected;
+            }
+
+            //Move to the last good edge of the current node in the root set.
             while(edgeCursor->next != NULL)
             {
                 puts("Moving1");
                 edgeCursor = edgeCursor->next;
             }
-            //Make the edge.
+            //Make the new edge.
             edge *e = calloc(sizeof(edge), 1);
-            e->node = new;
-            e->weight = weight;
-            e->next = NULL;
-            edgeCursor->next = e;
+            e->node = new;//Point the new edge to the matching node.
+            e->weight = weight;//Add the weight.
+            e->next = NULL;//Make sure it points to NULL.
+            edgeCursor->next = e;//Assign the new edge to the presently NULL next.
+            puts("added to list");
 
+
+
+            if(edgeCursorNew == NULL)
+            {
+                puts("First Edge NewNode");
+                edge *en = calloc(sizeof(edge), 1);
+                en->node = new;
+                en->weight = weight;
+                en->next = NULL;
+                new->connected = en;
+                edgeCursorNew = new->connected;
+            }
 
 
             //Move to the end of the edges of the new node.
@@ -148,6 +155,7 @@ void findAdjacencies(node *cur, node *new)
             en->weight = weight;
             en->next = NULL;
             edgeCursorNew->next = en;
+            puts("added to new");
 
 
         }
@@ -166,6 +174,7 @@ node *buildNode(double lat, double lon, float alt)
     new->lat = lat;
     new->lon = lon;
     new->alt = alt;
+    new->connected = NULL;
     return(new);
 }
 
@@ -175,21 +184,54 @@ void printem(node *cur)
     while(cur != NULL)
     {
         printf("\npacket #%d\n", count);
-        node *adj = cur->connected;
+        edge *adj = cur->connected;
+        puts("NullCheck");
+        printf("adj addr: %d\n", cur->connected);
         while(adj != NULL)
         {
-            printf("adj: %p > %d\n", (void *) adj, adj->lat);
-            adj = adj->connected;
+            puts("NotNull");
+            printf("adj: %p > %d\n", (void *) adj, adj->node->lat);
+            adj = adj->next;
         }
         cur = cur->next;
         ++count;
     }
 }
 
-/*
-int main(void)
+node * shortestRoute(node *root)
 {
-    node **nodes;
-    
+    //Find shortest path from node.
+    int index = 0;
+    //int saveIndex = 0;
+    int lowest = 15;
+    node *lowNode = calloc(sizeof(node), 1);
+    edge *edge = root->connected;
+    while(edge != NULL)
+    {
+        puts("EDGE");
+        if(edge->weight < lowest)
+        {
+            puts("NEW LOW");
+            lowest = edge->weight;
+            //saveIndex = index;
+            lowNode = edge->node;
+        }
+        ++index;
+        edge = edge->next;
+    }
+    printf("shortest route: %p weight: %d\n", lowNode, lowest);
+    return(lowNode);
 }
-*/
+
+void findPath(node *root)
+{
+    node *shortest = NULL;
+    shortest = shortestRoute(root);
+    printf("SCHRUTE: %p\n", shortest);
+    findPath(shortest);
+}
+
+
+
+
+

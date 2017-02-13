@@ -109,6 +109,9 @@ main(
     }
     puts("PRINTEM!!");
     //printf("ROOT: %p\n", nodes);
+    scrollNodes(nodes, nodes, findAdjacencies);
+    printf("CONNECTED TO ROOT: %p\n", nodes->lat);
+    //findPath(nodes);
     printem(nodes);
     free(zh);
     free(c);

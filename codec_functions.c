@@ -285,7 +285,7 @@ zerg3Decode(
 
     double latitude = convert64(be64toh(gps->Latit));
     double longitude = convert64(be64toh(gps->Longit));
-
+/*
     if (latitude > 0)
     {
         printf("Latitude: %.9f deg. N\n", latitude);
@@ -303,18 +303,18 @@ zerg3Decode(
     {
         printf("Longitude: %.9f deg. W\n", fabs(longitude));
     }
-
+*/
     uint32_t altitudeBin = ntohl(gps->Altit);
     float altitude = convert32(altitudeBin);
 
-    uint32_t bearingBin = ntohl(gps->Bearing);
-    float bearing = convert32(bearingBin);
+    //uint32_t bearingBin = ntohl(gps->Bearing);
+    //float bearing = convert32(bearingBin);
 
-    uint32_t speedBin = ntohl(gps->Speed);
-    float speed = convert32(speedBin);
+    //uint32_t speedBin = ntohl(gps->Speed);
+    //float speed = convert32(speedBin);
 
-    uint32_t accuracyBin = ntohl(gps->Acc);
-    float accuracy = convert32(accuracyBin);
+    //uint32_t accuracyBin = ntohl(gps->Acc);
+    //float accuracy = convert32(accuracyBin);
 
     printf("Altitude: %.1fm\n", altitude * 1.8288); //Multiplying by 1.8288 to convert fathoms to meters.
     //printf("Bearing: %f deg\n", bearing);
@@ -325,7 +325,7 @@ zerg3Decode(
     node *new = NULL;
     new = buildNode(latitude, longitude, altitude * 1.8288);
     insert(&nodes, new);
-    findAdjacencies(nodes, new);
+    //findAdjacencies(nodes, new);
 //  Build node  //
     free(gps);
 }
@@ -355,10 +355,10 @@ processZergHeader(
 
     //printf("Zerg Version: %x\n", ntohl(zh->Version) >> 24);
     printf("Message Type: %d\n", zergType);
-    printf("Sequence: %d\n", sequence);
+    //printf("Sequence: %d\n", sequence);
     //printf("Zerg Packet Length: %d\n", totalLen);
-    printf("Destination ID: %d\n", ntohl(zh->Did) >> 16);
-    printf("Source ID: %d\n", ntohl(zh->Sid) >> 16);
+    //printf("Destination ID: %d\n", ntohl(zh->Did) >> 16);
+    //printf("Source ID: %d\n", ntohl(zh->Sid) >> 16);
     c->zergType = zergType;
     c->totalLen = totalLen;
     return;
