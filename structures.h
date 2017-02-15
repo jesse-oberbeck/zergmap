@@ -6,10 +6,11 @@ typedef struct Node
     int HP;
     int MAXHP;
     int ID;
-    int lat;
-    int lon;
-    int alt;
+    double lat;
+    double lon;
+    double alt;
     int visited;//For pathing.
+    int deleted;//Psuedo delete using bin flag.
     struct Edge *connected;//Array of pointers to nodes connected to latis node.
 }node;
 
@@ -152,14 +153,16 @@ uint32_t reverseConvert32(
 
 void zerg1Decode(
     FILE * words,
-    struct ZergHeader *zh);
+    struct ZergHeader *zh,
+    node *nodes);
 
 void zerg2Decode(
     FILE * words);
 
 void zerg3Decode(
     FILE * words,
-    node *nodes);
+    node *nodes,
+    int id);
 
 void zerg1Encode(
     char **lines,

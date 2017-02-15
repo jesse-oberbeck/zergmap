@@ -111,7 +111,8 @@ processFile(
 void
 zerg1Decode(
     FILE * words,
-    struct ZergHeader *zh)
+    struct ZergHeader *zh,
+    node *nodes)
 {
     /*Decoder for "status" type packets. Pulls out and prints values. */
 
@@ -121,10 +122,11 @@ zerg1Decode(
     int nameLen = (ntohl(zh->TotalLen) >> 8) - sizeof(struct ZergHeader);   // - 24;
 
     char *message = calloc(nameLen + 1, 1);
-
+    int hp = ntohl(st->HP) >> 8;
+    int maxhp = ntohl(st->MaxHP) >> 8;
     fread(message, nameLen, 1, words);
     printf("Name: %s\n", message);
-    printf("HP: %d/%d\n", ntohl(st->HP) >> 8, ntohl(st->MaxHP) >> 8);
+    printf("HP: %d/%d\n", hp, maxhp);
     int unitTypeBin = ntohl(st->Type) >> 24;
 
     const char *typeArray[] =
@@ -139,6 +141,14 @@ zerg1Decode(
 
     int binSpeed = ntohl(st->Speed);
     double speed = convert32(binSpeed);
+
+    
+    //Status update to nodes.
+    int processedID = ntohl(zh->Did) >> 16;
+    node *new = addStatus(hp, maxhp, processedID);
+    packetTree(nodes, new);
+    //Status update to nodes.
+
 
     printf("Max Speed: %fm/s\n", speed);
     free(st);
@@ -274,7 +284,8 @@ seconds(
 void
 zerg3Decode(
     FILE * words,
-    node *nodes)
+    node *nodes,
+    int id)
 {
     /*Decoder for GPS type packets. Pulls corresponding data from
      * packet, and prints it. */
@@ -322,9 +333,11 @@ zerg3Decode(
     //printf("Accuracy: %.0fm\n", accuracy);
 
 //  Build node  //
-    node *new = NULL;
-    new = buildNode(latitude, longitude, altitude * 1.8288);
+    int processedID = ntohl(id) >> 16;
+    printf("BUILDING NODE: %d\n \n", processedID);
+    node *new = buildNode(latitude, longitude, altitude * 1.8288, processedID);
     insert(&nodes, new);
+    packetTree(nodes, new);
     //findAdjacencies(nodes, new);
 //  Build node  //
     free(gps);

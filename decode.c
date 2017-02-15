@@ -85,7 +85,7 @@ main(
         //Handle Status packets.
         if (zergType == 1)
         {
-            zerg1Decode(words, zh);
+            zerg1Decode(words, zh, nodes);
         }
 
         //Handle Command packets.
@@ -97,7 +97,7 @@ main(
         //Handle GPS packets.
         if (zergType == 3)
         {
-            zerg3Decode(words, nodes);
+            zerg3Decode(words, nodes, zh->Did);//TODO: ID TYPE MIGHT HAVE TO BE CHANGED
         }
 
         if (result > 0)
@@ -109,10 +109,21 @@ main(
     }
     puts("PRINTEM!!");
     //printf("ROOT: %p\n", nodes);
-    scrollNodes(nodes, nodes, findAdjacencies);
-    printf("CONNECTED TO ROOT: %p\n", nodes->lat);
+    node *base = calloc(sizeof(node), 1);
+    nodes = nodes->next;//TODO: FIGURE OUT WHY THE FIRST NODE IS EMPTY
+    base = nodes;
+    while(base != NULL)
+    {
+        puts("SCROLLIN SCROLLIN SCROLLIN");
+        findAdjacencies(base, base);
+        base = base->next;
+    }
+    //printf("CONNECTED TO ROOT: %p\n", nodes->lat);
     //findPath(nodes);
     printem(nodes);
+    puts("PRINT TREE");
+    printTree(nodes);
+    printf("FIRST NODE: %d\n", nodes->ID);
     free(zh);
     free(c);
     fclose(words);

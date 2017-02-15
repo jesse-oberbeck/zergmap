@@ -3,11 +3,26 @@
 #include <math.h>
 #include <stdint.h>
 
-void packetTree(node *tree, node *node)
+//TODO: Adjust build nodes to be usable for status packets, incorporate into status type packet handler.
+
+void
+printTree(
+    node * root)
+{
+    if (root == NULL)
+    {
+        return;
+    }
+    printTree(root->left);
+    printf("ID:%d HP: %d/%d ALT: %f\n", root->ID, root->HP, root->MAXHP, root->alt);
+    printTree(root->right);
+}
+
+node * packetTree(node *tree, node *node)
 {
     if(tree == NULL)
     {
-        tree = node;
+        return(node);
     }
     if(node->ID == tree->ID)
     {
@@ -22,12 +37,13 @@ void packetTree(node *tree, node *node)
     }
     else if(node->ID < tree->ID)
     {
-        packetTree(tree->left, node);
+        tree->left = packetTree(tree->left, node);
     }
     else
     {
-        packetTree(tree->right, node);
+        tree->right = packetTree(tree->right, node);
     }
+    return(tree);
 }
 
 double haversine(double th1, double ph1, double th2, double ph2)
@@ -39,16 +55,15 @@ double haversine(double th1, double ph1, double th2, double ph2)
 	dz = sin(th1) - sin(th2);
 	dx = cos(ph1) * cos(th1) - cos(th2);
 	dy = sin(ph1) * cos(th1);
-	return (asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * 6371)/1000;
+	return (asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * 6371)*1000;
 }
 
-int checkAdjacency(node *a, node*b)
+double checkAdjacency(node *a, node*b)
 {
     //Wrapper for haversine, so that two nodes can be passed.
     //For ease of use/typing, as it reduces the number of parameters.
     //Also serves as a simplified yes/no check for "is in range."
-    int dist = haversine(a->lat, a->lon, b->lat, b->lon);
-    //printf("dist: %d\n", dist);
+    double dist = haversine(a->lat, a->lon, b->lat, b->lon);
     int altDif = a->alt - b->alt;
     dist = sqrt( pow(altDif, 2) + pow(dist, 2) );
     if(dist < 15)
@@ -62,46 +77,52 @@ int checkAdjacency(node *a, node*b)
 }
 
 
-void insert(node **nodes, node *node)
+void insert(node **nodes, node *n)
 {
-    puts("----inserting");
-    if(!*nodes)
+    if(*nodes == NULL)//If it's the first node.
     {
-        *nodes = node;
+        printf("!!!!!!!!!!!!!!!!!FIRST NODE %d\n", n->ID);
+        *nodes = n;
         return;
     }
-    while((*nodes)->next != NULL)
+    while((*nodes)->next != NULL)//Move to the last existing node.
     {
         puts("----moving over");
         *nodes = (*nodes)->next;
     }
-    (*nodes)->next = node;
+    printf("----inserting %d\n", n->ID);
+    (*nodes)->next = n;
 }
 
-void scrollNodes(node *list, node *cur, void(*func)(node *list, node *cur))
+void scrollNodes(node *base, node *cur, void(*func)(node *base, node *cur))
 {
     int count = 0;
+    printf("Base ID: %d\n", base->ID);
     while(cur != NULL)
     {
+        if(cur == base)
+        {
+            cur = cur->next;//Don't compare a node to itself.
+        }
         printf("SCROLL #%d\n", count);
-        func(list, cur);
+        func(base, cur);
         cur = cur->next;
         ++count;
     }
 }
-
-//TODO: FIX THIS CRAP
+/*
 void findAdjacencies(node *cur, node *new)
 {
 
     while(cur != NULL)//While not at the end of the set of existing nodes.
     {
+
         edge *edgeCursor = cur->connected;//is now the first edge for the node, or NULL
         edge *edgeCursorNew = new->connected;//Same, but for the new node.
-        int weight = checkAdjacency(cur, new);//Find weight.
-        //printf("adj check: %d\n", weight);
+        double weight = checkAdjacency(cur, new);//Find weight.
+        printf("DISTANCE: %f\n", weight);
 
-        if(weight > 1 && weight < 16)//If the weight comes back in the correct range...
+        if(weight > 1.1 && weight < 16)//If the weight comes back in the correct range...
         {
             //Handle/add first edge.
             if(edgeCursor == NULL)
@@ -113,12 +134,17 @@ void findAdjacencies(node *cur, node *new)
                 e->next = NULL;
                 cur->connected = e;
                 edgeCursor = cur->connected;
+                printf("adj ID: %d\n", e->node->ID);
             }
 
             //Move to the last good edge of the current node in the root set.
             while(edgeCursor->next != NULL)
             {
                 puts("Moving1");
+                if(edgeCursor->next->node == new)
+                {
+                    break;
+                }
                 edgeCursor = edgeCursor->next;
             }
             //Make the new edge.
@@ -127,6 +153,7 @@ void findAdjacencies(node *cur, node *new)
             e->weight = weight;//Add the weight.
             e->next = NULL;//Make sure it points to NULL.
             edgeCursor->next = e;//Assign the new edge to the presently NULL next.
+            printf("adj ID: %d\n", e->node->ID);
             puts("added to list");
 
 
@@ -135,11 +162,12 @@ void findAdjacencies(node *cur, node *new)
             {
                 puts("First Edge NewNode");
                 edge *en = calloc(sizeof(edge), 1);
-                en->node = new;
+                en->node = cur;
                 en->weight = weight;
                 en->next = NULL;
                 new->connected = en;
                 edgeCursorNew = new->connected;
+                printf("adj ID: %d\n", e->node->ID);
             }
 
 
@@ -155,8 +183,57 @@ void findAdjacencies(node *cur, node *new)
             en->weight = weight;
             en->next = NULL;
             edgeCursorNew->next = en;
-            puts("added to new");
+            //puts("added to new");
 
+
+        }
+        cur = cur->next;//Move to the next node in the root set.
+    }
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void findAdjacencies(node *cur, node *new)
+{
+
+    while(cur != NULL)//While not at the end of the set of existing nodes.
+    {
+
+        //edge *edgeCursor = cur->connected;//is now the first edge for the node, or NULL
+        //edge *edgeCursorNew = new->connected;//Same, but for the new node.
+        double weight = checkAdjacency(cur, new);//Find weight.
+        printf("DISTANCE: %f\n", weight);
+
+        if(weight > 1.1 && weight < 16)//If the weight comes back in the correct range...
+        {
+
+            //make new edge for new node
+            edge *newEdge = calloc(sizeof(edge), 1);
+            newEdge->weight = weight;
+            newEdge->node = cur;
+            newEdge->next = new->connected;
+            new->connected = newEdge;
+
+            //make new edge for current node
+            edge *curEdge = calloc(sizeof(edge), 1);
+            curEdge->weight = weight;
+            curEdge->node = new;
+            curEdge->next = cur->connected;
+            cur->connected = curEdge;
 
         }
         cur = cur->next;//Move to the next node in the root set.
@@ -167,13 +244,34 @@ void findAdjacencies(node *cur, node *new)
 
 
 
-node *buildNode(double lat, double lon, float alt)
+
+
+
+
+
+
+
+
+
+
+
+node *addStatus(int hp, int maxhp, int id)
 {
-    printf("NEW NODE\nLAT: %f\nLON: %f\nALT: %f\n", lat, lon, alt);
+    node *new = calloc(sizeof(node), 1);
+    new->HP = hp;
+    new->MAXHP = maxhp;
+    new->ID = id;
+    return(new);
+}
+
+node *buildNode(double lat, double lon, float alt, int id)
+{
+    printf("NEW NODE LAT: %f LON: %f ALT: %f\n", lat, lon, alt);
     node *new = calloc(sizeof(node), 1);
     new->lat = lat;
     new->lon = lon;
     new->alt = alt;
+    new->ID = id;
     new->connected = NULL;
     return(new);
 }
@@ -183,14 +281,14 @@ void printem(node *cur)
     int count = 0;
     while(cur != NULL)
     {
-        printf("\npacket #%d\n", count);
+        printf("\npacket #%d ID: %d\n", count, cur->ID);
         edge *adj = cur->connected;
-        puts("NullCheck");
-        printf("adj addr: %d\n", cur->connected);
+        //puts("NullCheck");
+        printf("adj addr: %p\n", cur->connected);
         while(adj != NULL)
         {
-            puts("NotNull");
-            printf("adj: %p > %d\n", (void *) adj, adj->node->lat);
+            //puts("NotNull");
+            printf("adj: %d > %f\n", adj->node->ID, adj->node->lat);
             adj = adj->next;
         }
         cur = cur->next;
@@ -198,18 +296,43 @@ void printem(node *cur)
     }
 }
 
+node *leastAdj(node *root)
+{
+    edge *edgeCur = NULL;
+    node *least = calloc(sizeof(node), 1);
+    int leastAdj = 0;
+    int numAdj = 0;
+    while(root != NULL)
+    {
+        numAdj = 0;
+        edgeCur = root->connected;
+        while(edgeCur != NULL)
+        {
+            ++numAdj;
+            edgeCur = edgeCur->next;
+        }
+        if(numAdj < leastAdj)
+        {
+            leastAdj = numAdj;
+            least = edgeCur->node;
+        }
+        root = root->next;
+    }
+    printf("LEAST: %p\n", least);
+    return(least);
+}
+
 node * shortestRoute(node *root)
 {
     //Find shortest path from node.
     int index = 0;
-    //int saveIndex = 0;
     int lowest = 15;
     node *lowNode = calloc(sizeof(node), 1);
     edge *edge = root->connected;
     while(edge != NULL)
     {
         puts("EDGE");
-        if(edge->weight < lowest)
+        if((edge->weight < lowest) && (edge->node->visited == 0))
         {
             puts("NEW LOW");
             lowest = edge->weight;
@@ -225,10 +348,25 @@ node * shortestRoute(node *root)
 
 void findPath(node *root)
 {
+    node *start = leastAdj(root);//Node with least adjacencies is start point.
+    node *end = root;
+    while(end != NULL)
+    {
+        if(end == start)
+        {
+            end = end->next;//Keep from trying to find paths from start to itself.
+        }
+        //DO STUFF
+        end = end->next;
+    }
+
+
     node *shortest = NULL;
-    shortest = shortestRoute(root);
+    shortest = shortestRoute(root);//Find shortest route from starting node.
     printf("SCHRUTE: %p\n", shortest);
     findPath(shortest);
+    free(start);
+    free(shortest);
 }
 
 
