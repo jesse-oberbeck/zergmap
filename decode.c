@@ -27,13 +27,15 @@ main(
         fprintf(stderr, "Please provide a file name.\n");
         return (1);
     }
-    else if (access(argv[1], F_OK) == -1)
+    for(int i = 1; i < argc; ++i)
+    {////////////////////////////////////////////////////////////////
+    if (access(argv[i], F_OK) == -1)
     {
         fprintf(stderr, "Invalid file name.\n");
         return (1);
     }
 
-    char *file = argv[1];
+    char *file = argv[i];
     FILE *words = fopen(file, "rb");
     int result = 0;
     int end_pos = fileSize(words);
@@ -106,7 +108,11 @@ main(
         }
         current_pos = ftell(words);
         puts("~");
+    //free(zh);
+    //free(c);
+    //fclose(words);
     }
+    }//////////////////////////////////////////////////////////////////////////////////
     puts("PRINTEM!!");
     //printf("ROOT: %p\n", nodes);
     node *base = calloc(sizeof(node), 1);
@@ -124,8 +130,6 @@ main(
     puts("PRINT TREE");
     printTree(nodes);
     printf("FIRST NODE: %d\n", nodes->ID);
-    free(zh);
-    free(c);
-    fclose(words);
+
     return (0);
 }
