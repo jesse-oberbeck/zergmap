@@ -58,7 +58,17 @@ double haversine(double th1, double ph1, double th2, double ph2)
 	return (asin(sqrt(dx * dx + dy * dy + dz * dz) / 2) * 2 * 6371)*1000;
 }
 
-double checkAdjacency(node *a, node*b)
+double checkDistance(node *a, node *b)
+{
+    //Wrapper for haversine, so that two nodes can be passed.
+    //For ease of use/typing, as it reduces the number of parameters.
+    double dist = haversine(a->lat, a->lon, b->lat, b->lon);
+    int altDif = a->alt - b->alt;
+    dist = sqrt( pow(altDif, 2) + pow(dist, 2) );
+    return(dist);
+}
+
+double checkAdjacency(node *a, node *b)
 {
     //Wrapper for haversine, so that two nodes can be passed.
     //For ease of use/typing, as it reduces the number of parameters.
@@ -110,100 +120,6 @@ void scrollNodes(node *base, node *cur, void(*func)(node *base, node *cur))
         ++count;
     }
 }
-/*
-void findAdjacencies(node *cur, node *new)
-{
-
-    while(cur != NULL)//While not at the end of the set of existing nodes.
-    {
-
-        edge *edgeCursor = cur->connected;//is now the first edge for the node, or NULL
-        edge *edgeCursorNew = new->connected;//Same, but for the new node.
-        double weight = checkAdjacency(cur, new);//Find weight.
-        printf("DISTANCE: %f\n", weight);
-
-        if(weight > 1.1 && weight < 16)//If the weight comes back in the correct range...
-        {
-            //Handle/add first edge.
-            if(edgeCursor == NULL)
-            {
-                puts("First Edge");
-                edge *e = calloc(sizeof(edge), 1);
-                e->node = new;
-                e->weight = weight;
-                e->next = NULL;
-                cur->connected = e;
-                edgeCursor = cur->connected;
-                printf("adj ID: %d\n", e->node->ID);
-            }
-
-            //Move to the last good edge of the current node in the root set.
-            while(edgeCursor->next != NULL)
-            {
-                puts("Moving1");
-                if(edgeCursor->next->node == new)
-                {
-                    break;
-                }
-                edgeCursor = edgeCursor->next;
-            }
-            //Make the new edge.
-            edge *e = calloc(sizeof(edge), 1);
-            e->node = new;//Point the new edge to the matching node.
-            e->weight = weight;//Add the weight.
-            e->next = NULL;//Make sure it points to NULL.
-            edgeCursor->next = e;//Assign the new edge to the presently NULL next.
-            printf("adj ID: %d\n", e->node->ID);
-            puts("added to list");
-
-
-
-            if(edgeCursorNew == NULL)
-            {
-                puts("First Edge NewNode");
-                edge *en = calloc(sizeof(edge), 1);
-                en->node = cur;
-                en->weight = weight;
-                en->next = NULL;
-                new->connected = en;
-                edgeCursorNew = new->connected;
-                printf("adj ID: %d\n", e->node->ID);
-            }
-
-
-            //Move to the end of the edges of the new node.
-            while(edgeCursorNew->next != NULL)
-            {
-                puts("Moving2");
-                edgeCursorNew = edgeCursorNew->next;
-            }
-            //Make the edge for the new node.
-            edge *en = calloc(sizeof(edge), 1);
-            en->node = new;
-            en->weight = weight;
-            en->next = NULL;
-            edgeCursorNew->next = en;
-            //puts("added to new");
-
-
-        }
-        cur = cur->next;//Move to the next node in the root set.
-    }
-}
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -239,19 +155,6 @@ void findAdjacencies(node *cur, node *new)
         cur = cur->next;//Move to the next node in the root set.
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -327,14 +230,14 @@ node * shortestRoute(node *root)
     //Find shortest path from node.
     int index = 0;
     int lowest = 15;
-    node *lowNode = calloc(sizeof(node), 1);
+    node *lowNode = NULL;//calloc(sizeof(node), 1);
     edge *edge = root->connected;
     while(edge != NULL)
     {
-        puts("EDGE");
+        //puts("EDGE");
         if((edge->weight < lowest) && (edge->node->visited == 0))
         {
-            puts("NEW LOW");
+            //puts("NEW LOW");
             lowest = edge->weight;
             //saveIndex = index;
             lowNode = edge->node;
@@ -345,6 +248,21 @@ node * shortestRoute(node *root)
     printf("shortest route: %p weight: %d\n", lowNode, lowest);
     return(lowNode);
 }
+
+void
+visitClear(
+    node * root)
+{
+    if (root == NULL)
+    {
+        return;
+    }
+    visitClear(root->left);
+    root->visited = 0;
+    //printf("ID:%d HP: %d/%d ALT: %f\n", root->ID, root->HP, root->MAXHP, root->alt);
+    visitClear(root->right);
+}
+
 
 void findPath(node *root)
 {
@@ -363,11 +281,147 @@ void findPath(node *root)
 
     node *shortest = NULL;
     shortest = shortestRoute(root);//Find shortest route from starting node.
-    printf("SCHRUTE: %p\n", shortest);
+    printf("SCHRUTE: %d\n", shortest->ID);
+    shortest->visited = 1;
     findPath(shortest);
     free(start);
     free(shortest);
 }
+
+//UNDER CONSTRUCTION//
+int endProbe(node *n, node *end)
+{
+    //Tests if node n is connected to node end.
+    int found = 0;
+    edge *e = n->connected;
+    while(e != NULL)
+    {
+        if(e->node == end)
+        {
+            found = 1;
+        }
+        e = e->next;
+    }
+    return(found);
+}
+
+node *commonCheck(node *a, node *b)
+{
+    //Check two nodes for common edges, returns the common edge or NULL.
+    edge *ae = a->connected;
+    edge *be = b->connected;
+    while(ae != NULL)
+    {
+        while(be != NULL)
+        {
+            if(ae->node == be->node)
+            {
+                return(ae->node);
+            }
+            be = be->next;
+        }
+        ae = ae->next;
+    }
+    return(NULL);
+}
+
+node *findShortest(node *n, node *end)
+{
+    node *path = NULL;
+    int dist = 999999;
+    edge *e = n->connected;
+
+    while(e != NULL)
+    {
+        int c = checkDistance(e->node, end);
+        if(c < dist && e->node->visited == 0)
+        {
+            dist = c;
+            path = e->node;
+        }
+        e = e->next;
+    }
+    return(path);
+}
+
+int startPaths(node* start1, node* start2, node *end)
+{
+    node *path1 = NULL;
+    int dist1 = 999999;//Arbitrary high placeholder.
+
+    node *path2 = NULL;
+    int dist2 = 999999;
+
+    //Increment when a path reaches end.
+    int paths = 0;
+
+    node *collisionPoint = NULL;
+
+    edge *e = start1->connected;
+
+//Find the two paths from start closest to the end point.
+    while(e != NULL)
+    {
+        int c = checkDistance(e->node, end);
+        if(c < dist1)
+        {
+            dist1 = c;
+            path1 = e->node;
+        }
+        else if(c < dist2)
+        {
+            dist2 = c;
+            path2 = e->node;
+        }
+        e = e->next;
+    }
+    path1->visited = 1;
+    path2->visited = 1;
+
+    while(collisionPoint == NULL && paths < 2)//While collision has not occurred and both paths have not been found.
+    {
+        if(endProbe(path1, end) || endProbe(path1, end))
+        {
+            ++paths;
+        }
+
+        //Check for common nodes each time they advance.
+        node *common = commonCheck(path1, path2);
+
+        //Choose next for path1
+        //edge *edge1 = path1->connected;
+        path1->visited = 1;
+        node *path1check = findShortest(path1, end);//Closest non visited node.
+        //If the route closest to end is not shared, take it.
+        if(path1check != common)
+        {
+            path1 = path1check;
+            path1->visited = 1;
+        }
+        
+
+        //Choose next for path2
+        //edge *edge2 = path2->connected;
+        path2->visited = 1;
+        node *path2check = findShortest(path2, end);//Closest non visited node.
+        //If the route closest to end is not shared, take it.
+        if(path2check != common)
+        {
+            path2 = path2check;
+            path2->visited = 1;
+        }
+    }
+
+}
+
+
+
+
+
+
+
+
+
 
 
 

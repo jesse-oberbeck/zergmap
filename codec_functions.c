@@ -367,7 +367,7 @@ processZergHeader(
     }
 
     //printf("Zerg Version: %x\n", ntohl(zh->Version) >> 24);
-    printf("Message Type: %d\n", zergType);
+    //printf("Message Type: %d\n", zergType);
     //printf("Sequence: %d\n", sequence);
     //printf("Zerg Packet Length: %d\n", totalLen);
     //printf("Destination ID: %d\n", ntohl(zh->Did) >> 16);
