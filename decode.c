@@ -118,7 +118,7 @@ main(
     node *base = calloc(sizeof(node), 1);
     nodes = nodes->next;//TODO: FIGURE OUT WHY THE FIRST NODE IS EMPTY
     base = nodes;
-    while(base != NULL)
+    while(base->next != NULL)
     {
         puts("SCROLLIN SCROLLIN SCROLLIN");
         findAdjacencies(base, base);
@@ -126,6 +126,7 @@ main(
     }
     //printf("CONNECTED TO ROOT: %p\n", nodes->lat);
     //findPath(nodes);
+    startPaths(nodes, base);
     printem(nodes);
     puts("PRINT TREE");
     printTree(nodes);

@@ -344,8 +344,9 @@ node *findShortest(node *n, node *end)
     return(path);
 }
 
-int startPaths(node* start1, node* start2, node *end)
+void startPaths(node* start, node *end)
 {
+    puts("startPaths");
     node *path1 = NULL;
     int dist1 = 999999;//Arbitrary high placeholder.
 
@@ -357,7 +358,7 @@ int startPaths(node* start1, node* start2, node *end)
 
     node *collisionPoint = NULL;
 
-    edge *e = start1->connected;
+    edge *e = start->connected;
 
 //Find the two paths from start closest to the end point.
     while(e != NULL)
@@ -376,42 +377,101 @@ int startPaths(node* start1, node* start2, node *end)
         e = e->next;
     }
     path1->visited = 1;
+    if(!path2)
+    {
+        puts("Not enough paths...");
+        return;
+    }
     path2->visited = 1;
 
     while(collisionPoint == NULL && paths < 2)//While collision has not occurred and both paths have not been found.
     {
-        if(endProbe(path1, end) || endProbe(path1, end))
+        if(endProbe(path1, end))
         {
             ++paths;
+            puts("path found!");
         }
-
+        if(endProbe(path2, end))
+        {
+            ++paths;
+            puts("path found!");
+        }
         //Check for common nodes each time they advance.
         node *common = commonCheck(path1, path2);
 
-        //Choose next for path1
-        //edge *edge1 = path1->connected;
+//Choose next for path1
+        edge *edge1 = path1->connected;
         path1->visited = 1;
         node *path1check = findShortest(path1, end);//Closest non visited node.
+        node *alternate1 = NULL;
+        while(edge1 != NULL)
+        {
+            if(edge1->node != common && edge1->node != path1check)
+            {
+                alternate1 = edge1->node;
+            }
+            edge1 = edge1->next;
+        }
         //If the route closest to end is not shared, take it.
-        if(path1check != common)
+        if(path1check != common && path1check != NULL)
         {
             path1 = path1check;
-            path1->visited = 1;
         }
-        
+        else if(alternate1 != NULL)
+        {
+            path1 = alternate1;
+        }
+        else if(common != NULL && common->visited == 0)
+        {
+            path1 = common;
+        }
+        else
+        {
+            collisionPoint = path1;
+        }
+        path1->visited = 1;
 
-        //Choose next for path2
-        //edge *edge2 = path2->connected;
+
+//Choose next for path2
+        edge *edge2 = path2->connected;
         path2->visited = 1;
         node *path2check = findShortest(path2, end);//Closest non visited node.
+        node *alternate2 = NULL;
+        while(edge2 != NULL)
+        {
+            if(edge2->node != common && edge2->node != path1check)
+            {
+                alternate2 = edge2->node;
+            }
+            edge2 = edge2->next;
+        }
         //If the route closest to end is not shared, take it.
-        if(path2check != common)
+        if(path2check != common && path2check != NULL)
         {
             path2 = path2check;
-            path2->visited = 1;
         }
+        else if(alternate2 != NULL)
+        {
+            path2 = alternate1;
+        }
+        else if(common != NULL && common->visited == 0)
+        {
+            path2 = common;
+        }
+        else
+        {
+            collisionPoint = path1;
+        }
+        path2->visited = 1;
     }
-
+    if(paths > 1)
+    {
+        puts("HAS REDUNDANT PATHS");
+    }
+    else
+    {
+        puts("Not enough paths...");
+    }
 }
 
 
