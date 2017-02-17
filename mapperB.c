@@ -14,7 +14,7 @@ printTree(
         return;
     }
     printTree(root->left);
-    printf("ID:%d HP: %d/%d ALT: %f\n", root->ID, root->HP, root->MAXHP, root->alt);
+    printf("ID:%d HP: %d/%d DEL: %d\n", root->ID, root->HP, root->MAXHP, root->deleted);
     printTree(root->right);
 }
 
@@ -91,16 +91,16 @@ void insert(node **nodes, node *n)
 {
     if(*nodes == NULL)//If it's the first node.
     {
-        printf("!!!!!!!!!!!!!!!!!FIRST NODE %d\n", n->ID);
+        //printf("!!!!!!!!!!!!!!!!!FIRST NODE %d\n", n->ID);
         *nodes = n;
         return;
     }
     while((*nodes)->next != NULL)//Move to the last existing node.
     {
-        puts("----moving over");
+        //puts("----moving over");
         *nodes = (*nodes)->next;
     }
-    printf("----inserting %d\n", n->ID);
+    //printf("----inserting %d\n", n->ID);
     (*nodes)->next = n;
 }
 
@@ -132,7 +132,7 @@ void findAdjacencies(node *cur, node *new)
         //edge *edgeCursor = cur->connected;//is now the first edge for the node, or NULL
         //edge *edgeCursorNew = new->connected;//Same, but for the new node.
         double weight = checkAdjacency(cur, new);//Find weight.
-        printf("DISTANCE: %f\n", weight);
+        //printf("DISTANCE: %f\n", weight);
 
         if(weight > 1.1 && weight < 16)//If the weight comes back in the correct range...
         {
@@ -169,7 +169,7 @@ node *addStatus(int hp, int maxhp, int id)
 
 node *buildNode(double lat, double lon, float alt, int id)
 {
-    printf("NEW NODE LAT: %f LON: %f ALT: %f\n", lat, lon, alt);
+    //printf("NEW NODE LAT: %f LON: %f ALT: %f\n", lat, lon, alt);
     node *new = calloc(sizeof(node), 1);
     new->lat = lat;
     new->lon = lon;
@@ -196,6 +196,62 @@ void printem(node *cur)
         }
         cur = cur->next;
         ++count;
+    }
+}
+
+void trimLeaves(node *root, int *nodeCount)
+{
+    puts("TL CALLED");
+    node *start = root;
+    int noLeaf = 1;
+    while(root!= NULL)
+    {
+        int edgeCount = 0;
+        edge *e = root->connected;
+        while(e != NULL)
+        {
+            ++edgeCount;
+            e = e->next;
+        }
+        if(edgeCount == 1)
+        {
+            noLeaf = 0;
+            //DELETE EDGE FROM FAR NODE
+            edge *farEdge = root->connected->node->connected;//Edge from opposing node, pointing to the leaf.
+            edge *farPrev = farEdge;
+            while(farEdge->node->ID != root->ID)//Until the far edge points to root.
+            {
+                farPrev = farEdge;
+                farEdge = farEdge->next;
+            }
+            edge *temp = farEdge;
+
+            if(root->connected->node->connected != farEdge)
+            {
+                farPrev->next = farEdge->next;
+                free(temp);
+            }
+            else
+            {
+                root->connected->node->connected = farEdge->next;
+                free(temp);
+                temp = NULL;
+            }
+            //farPrev->next = farEdge->next;
+            //free(farEdge);
+            //DELETE FROM CURRENT NODE
+            printf("Deleting... %d\n", root->ID);
+            free(root->connected);
+            root->connected = NULL;
+            root->deleted = 1;
+            *nodeCount -= 1;
+        }
+        root = root->next;
+    }
+    //do another check afterward, call func again if leaf found
+    if(noLeaf == 0)
+    {
+        trimLeaves(start, nodeCount);
     }
 }
 
@@ -334,7 +390,7 @@ node *findShortest(node *n, node *end)
     while(e != NULL)
     {
         int c = checkDistance(e->node, end);
-        if(c < dist && e->node->visited == 0)
+        if(c < dist && e->node->visited == 0 && e->node->deleted == 0)
         {
             dist = c;
             path = e->node;
@@ -346,6 +402,7 @@ node *findShortest(node *n, node *end)
 
 void startPaths(node* start, node *end)
 {
+    printf("END ID: %d\n", end->ID);
     puts("startPaths");
     node *path1 = NULL;
     int dist1 = 999999;//Arbitrary high placeholder.
@@ -467,10 +524,12 @@ void startPaths(node* start, node *end)
     if(paths > 1)
     {
         puts("HAS REDUNDANT PATHS");
+        return;
     }
     else
     {
         puts("Not enough paths...");
+        return;
     }
 }
 

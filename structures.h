@@ -162,7 +162,8 @@ void zerg2Decode(
 void zerg3Decode(
     FILE * words,
     node *nodes,
-    int id);
+    int id,
+    int *nodeCount);
 
 void zerg1Encode(
     char **lines,

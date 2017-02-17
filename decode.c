@@ -19,6 +19,7 @@ main(
 {
     ///////////////////////////
     node *nodes = calloc(sizeof(node), 1);
+    int nodeCount = 0;
     ///////////////////////////
 
     //Check for file name provided as arg.
@@ -99,7 +100,7 @@ main(
         //Handle GPS packets.
         if (zergType == 3)
         {
-            zerg3Decode(words, nodes, zh->Did);//TODO: ID TYPE MIGHT HAVE TO BE CHANGED
+            zerg3Decode(words, nodes, zh->Did, &nodeCount);//TODO: ID TYPE MIGHT HAVE TO BE CHANGED
         }
 
         if (result > 0)
@@ -120,13 +121,39 @@ main(
     base = nodes;
     while(base->next != NULL)
     {
-        puts("SCROLLIN SCROLLIN SCROLLIN");
+        //puts("SCROLLIN SCROLLIN SCROLLIN");
         findAdjacencies(base, base);
         base = base->next;
     }
-    //printf("CONNECTED TO ROOT: %p\n", nodes->lat);
+    puts("trim leaves...");
+    trimLeaves(nodes, &nodeCount);
     //findPath(nodes);
-    startPaths(nodes, base);
+    node *start = nodes;
+    //printf("NODES REMAINING: %d\n", nodeCount);
+    //printf("CONNECTED TO ROOT: %d\n", start->ID);
+    if(nodeCount > 2)
+    {
+        //Move start to a non-deleted node.
+        while(start != NULL && start->deleted == 1)
+        {
+            puts("next");
+            start = start->next;
+        }
+        node *end = start->next;
+        printf("END = %d\n",end->ID);
+        printem(nodes);
+        while(end != NULL)//TODO: break this if count < 3
+        {
+            if(end->deleted == 0)
+            {
+                printf("start: %d del: %d\n", start->ID, start->deleted);
+                printf("end: %d del: %d\n", end->ID, end->deleted);
+                startPaths(start, end);
+                
+            }
+            end = end->next;
+        }
+    }
     printem(nodes);
     puts("PRINT TREE");
     printTree(nodes);

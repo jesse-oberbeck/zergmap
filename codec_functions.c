@@ -285,7 +285,8 @@ void
 zerg3Decode(
     FILE * words,
     node *nodes,
-    int id)
+    int id,
+    int *nodeCount)
 {
     /*Decoder for GPS type packets. Pulls corresponding data from
      * packet, and prints it. */
@@ -327,15 +328,16 @@ zerg3Decode(
     //uint32_t accuracyBin = ntohl(gps->Acc);
     //float accuracy = convert32(accuracyBin);
 
-    printf("Altitude: %.1fm\n", altitude * 1.8288); //Multiplying by 1.8288 to convert fathoms to meters.
+    //printf("Altitude: %.1fm\n", altitude * 1.8288); //Multiplying by 1.8288 to convert fathoms to meters.
     //printf("Bearing: %f deg\n", bearing);
     //printf("Speed: %.0fkm/h\n", speed * 3.6);   //3.6 to convert m/s to km/h.
     //printf("Accuracy: %.0fm\n", accuracy);
 
 //  Build node  //
     int processedID = ntohl(id) >> 16;
-    printf("BUILDING NODE: %d\n \n", processedID);
+    //printf("BUILDING NODE: %d\n \n", processedID);
     node *new = buildNode(latitude, longitude, altitude * 1.8288, processedID);
+    *nodeCount += 1;
     insert(&nodes, new);
     packetTree(nodes, new);
     //findAdjacencies(nodes, new);
