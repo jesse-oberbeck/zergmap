@@ -20,29 +20,40 @@ printTree(
 
 node * packetTree(node *tree, node *node)
 {
+    printf("NODE HP: %d/%d ID: %d\n", node->HP, node->MAXHP, node->ID);
     if(tree == NULL)
     {
         return(node);
     }
-    if(node->ID == tree->ID)
+
+    if(node->ID < tree->ID)
     {
-        if(tree->HP < 0)
-        {
-            tree->HP = node->HP;
-        }
-        else if(node->HP < 0)
-        {
-            node->HP = tree->HP;
-        }
-    }
-    else if(node->ID < tree->ID)
-    {
+        puts("left");
         tree->left = packetTree(tree->left, node);
     }
-    else
+    else if(node->ID > tree->ID)
     {
+        puts("right");
         tree->right = packetTree(tree->right, node);
     }
+
+    else if(node->ID == tree->ID)
+    {
+        puts("ID MATCH");
+        if(tree->MAXHP > node->MAXHP)
+        {
+            node->MAXHP = tree->MAXHP;
+            node->HP = tree->HP;
+            printf("NODEHP: %d\n", node->HP);
+        }
+        else
+        {
+            tree->MAXHP = node->MAXHP;
+            tree->HP = node->HP;
+            printf("TREEHP: %d\n", tree->HP);
+        }
+    }
+
     return(tree);
 }
 
@@ -169,7 +180,7 @@ node *addStatus(int hp, int maxhp, int id)
 
 node *buildNode(double lat, double lon, float alt, int id)
 {
-    //printf("NEW NODE LAT: %f LON: %f ALT: %f\n", lat, lon, alt);
+    printf("NEW NODE LAT: %f LON: %f ALT: %f\n", lat, lon, alt);
     node *new = calloc(sizeof(node), 1);
     new->lat = lat;
     new->lon = lon;
@@ -690,15 +701,27 @@ void startPaths(node* start, node *end)
         }
         e = e->next;
     }
+    if(path1 != NULL)
+    {
+        printf("start path1: %d\n", path1->ID);
+        path1->visited = 1;
+    }
+    if(path2 != NULL)
+    {
+        printf("start path2: %d\n", path2->ID);
+        path2->visited = 1;
+    }
     if(endProbe(path1, end))
     {
-        puts("path1 next to end");
+        printf("path1 (%d) next to end\n", path1->ID);
         ++paths;
+        path1 = NULL;
     }
     if(path2 != NULL && endProbe(path2, end))
     {
-        puts("path1 next to end");
+        printf("path2 (%d) next to end\n", path2->ID);
         ++paths;
+        path2 = NULL;
     }
     if(paths > 1)
     {

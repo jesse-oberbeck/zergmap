@@ -57,6 +57,7 @@ main(
     while (current_pos != end_pos)
     {
         result = processFile(words);
+        //printf("!!!!!!!!!!!!!RESULT: %d\n", result);
         if (result < 0)
         {
             free(zh);
@@ -109,10 +110,12 @@ main(
         }
         current_pos = ftell(words);
         puts("~");
+
+    
+    }
     free(zh);
     free(c);
     fclose(words);
-    }
     }
     puts("PRINTEM!!");
     node *base = NULL;
@@ -121,7 +124,6 @@ main(
     base = nodes;
     while(base->next != NULL)
     {
-        //puts("SCROLLIN SCROLLIN SCROLLIN");
         findAdjacencies(base, base);
         base = base->next;
     }
@@ -129,8 +131,6 @@ main(
     trimLeaves(nodes, &nodeCount);
     //findPath(nodes);
     node *start = nodes;
-    //printf("NODES REMAINING: %d\n", nodeCount);
-    //printf("CONNECTED TO ROOT: %d\n", start->ID);
     if(nodeCount > 2)
     {
         //Move start to a non-deleted node.
