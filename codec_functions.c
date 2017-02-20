@@ -89,7 +89,14 @@ processFile(
 
     fread(ph, sizeof(struct PcapHeader), 1, words);
     fread(eh, sizeof(struct EthernetHeader), 1, words);
-    fread(ih, sizeof(struct Ipv4Header), 1, words);
+    if(eh->Etype == -8826 )
+    {
+        fseek(words, 40, SEEK_CUR);
+    }
+    else
+    {
+        fread(ih, sizeof(struct Ipv4Header), 1, words);
+    }
     fread(uh, sizeof(struct UdpHeader), 1, words);
 
     int length_of_data = ntohl(ph->DataLen) >> 24;

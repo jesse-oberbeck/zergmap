@@ -22,12 +22,12 @@ node * packetTree(node *tree, node *node)
 {
 //Insert a node into a tree structure, adjusting HP values if same ID
 //is found.
-    printf("NODE HP: %d/%d ID: %d\n", node->HP, node->MAXHP, node->ID);
+    
     if(tree == NULL)
     {
         return(node);
     }
-
+    printf("NODE ID: %d, TREE ID: %d\n", node->ID, tree->ID);
     if(node->ID < tree->ID)
     {
         puts("left");
@@ -39,13 +39,14 @@ node * packetTree(node *tree, node *node)
         tree->right = packetTree(tree->right, node);
     }
 
-    else if(node->ID == tree->ID)
+    else if(node->ID - tree->ID == 0)
     {
         puts("ID MATCH");
         if(tree->MAXHP > node->MAXHP)
         {
             node->MAXHP = tree->MAXHP;
             node->HP = tree->HP;
+            tree = node;
             printf("NODEHP: %d\n", node->HP);
         }
         else
