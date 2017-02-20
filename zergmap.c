@@ -21,6 +21,7 @@ main(
     ///////////////////////////
     node *nodes = calloc(sizeof(node), 1);
     int nodeCount = 0;
+
     ///////////////////////////
 
     //Check for file name provided as arg.
@@ -29,111 +30,112 @@ main(
         fprintf(stderr, "Please provide a file name.\n");
         return (1);
     }
-    for(int i = 1; i < argc; ++i)
-    {////////////////////////////////////////////////////////////////
-    if (access(argv[i], F_OK) == -1)
-    {
-        fprintf(stderr, "Invalid file name.\n");
-        return (1);
-    }
-
-    char *file = argv[i];
-    FILE *words = fopen(file, "rb");
-    int result = 0;
-    int end_pos = fileSize(words);
-
-    //Reads in file header once.
-    struct FileHeader *fh = calloc(sizeof(*fh), 1);
-
-    fread(fh, sizeof(struct FileHeader), 1, words);
-    //printf("LLT: %x\n", fh->MajorVer);
-    free(fh);
-
-    int current_pos = ftell(words);
-
-    struct ZergHeader *zh = calloc(sizeof(*zh), 1);
-    struct Container *c = calloc(sizeof(*c), 1);
-
-    //Loop to handle individual packets begins here.
-    while (current_pos != end_pos)
-    {
-        result = processFile(words);
-        //printf("!!!!!!!!!!!!!RESULT: %d\n", result);
-        if (result < 0)
+    for (int i = 1; i < argc; ++i)
+    {                           ////////////////////////////////////////////////////////////////
+        if (access(argv[i], F_OK) == -1)
         {
-            free(zh);
-            free(c);
-            fclose(words);
-            return (0);
+            fprintf(stderr, "Invalid file name.\n");
+            return (1);
         }
 
-        processZergHeader(words, zh, c);
-        int zergType = c->zergType;
-        int totalLen = (ntohl(zh->TotalLen) >> 8) - 12;
-        unsigned int check = 0;
+        char *file = argv[i];
+        FILE *words = fopen(file, "rb");
+        int result = 0;
+        int end_pos = fileSize(words);
 
-        //Handle message packets.
-        if (zergType == 0)
+        //Reads in file header once.
+        struct FileHeader *fh = calloc(sizeof(*fh), 1);
+
+        fread(fh, sizeof(struct FileHeader), 1, words);
+        //printf("LLT: %x\n", fh->MajorVer);
+        free(fh);
+
+        int current_pos = ftell(words);
+
+        struct ZergHeader *zh = calloc(sizeof(*zh), 1);
+        struct Container *c = calloc(sizeof(*c), 1);
+
+        //Loop to handle individual packets begins here.
+        while (current_pos != end_pos)
         {
-            char *message = calloc(totalLen + 1, 1);
-
-            check = fread(message, totalLen, 1, words);
-            if (check > sizeof(*message))
+            result = processFile(words);
+            //printf("!!!!!!!!!!!!!RESULT: %d\n", result);
+            if (result < 0)
             {
-                fprintf(stderr, "Invalid packet detected. Stopping.\n");
-                exit(1);
+                free(zh);
+                free(c);
+                fclose(words);
+                return (0);
             }
-            printf("%s\n", message);
-            free(message);
-        }
 
-        //Handle Status packets.
-        if (zergType == 1)
-        {
-            zerg1Decode(words, zh, nodes);
-        }
+            processZergHeader(words, zh, c);
+            int zergType = c->zergType;
+            int totalLen = (ntohl(zh->TotalLen) >> 8) - 12;
+            unsigned int check = 0;
 
-        //Handle Command packets.
-        if (zergType == 2)
-        {
-            zerg2Decode(words);
-        }
+            //Handle message packets.
+            if (zergType == 0)
+            {
+                char *message = calloc(totalLen + 1, 1);
 
-        //Handle GPS packets.
-        if (zergType == 3)
-        {
-            zerg3Decode(words, nodes, zh->Did, &nodeCount);//TODO: ID TYPE MIGHT HAVE TO BE CHANGED
-        }
+                check = fread(message, totalLen, 1, words);
+                if (check > sizeof(*message))
+                {
+                    fprintf(stderr, "Invalid packet detected. Stopping.\n");
+                    exit(1);
+                }
+                printf("%s\n", message);
+                free(message);
+            }
 
-        if (result > 0)
-        {
-            fseek(words, result, SEEK_CUR);
-        }
-        current_pos = ftell(words);
-        puts("~");
+            //Handle Status packets.
+            if (zergType == 1)
+            {
+                zerg1Decode(words, zh, nodes);
+            }
 
-    
-    }
-    free(zh);
-    free(c);
-    fclose(words);
+            //Handle Command packets.
+            if (zergType == 2)
+            {
+                zerg2Decode(words);
+            }
+
+            //Handle GPS packets.
+            if (zergType == 3)
+            {
+                zerg3Decode(words, nodes, zh->Did, &nodeCount); //TODO: ID TYPE MIGHT HAVE TO BE CHANGED
+            }
+
+            if (result > 0)
+            {
+                fseek(words, result, SEEK_CUR);
+            }
+            current_pos = ftell(words);
+            puts("~");
+
+
+        }
+        free(zh);
+        free(c);
+        fclose(words);
     }
     puts("PRINTEM!!");
     node *base = NULL;
     node *seed = nodes;
-    if(nodes->next == NULL)
+
+    if (nodes->next == NULL)
     {
         puts("Not enough nodes.");
         exit(1);
     }
     nodes = nodes->next;
     base = nodes;
-    if(base->next == NULL)
+    if (base->next == NULL)
     {
         puts("Not enough nodes.");
         exit(1);
     }
-    while(base->next != NULL)
+    while (base->next != NULL)
     {
         findAdjacencies(base, base);
         base = base->next;
@@ -142,27 +144,29 @@ main(
     trimLeaves(nodes, &nodeCount);
     //findPath(nodes);
     node *start = nodes;
-    if(nodeCount > 2)
+
+    if (nodeCount > 2)
     {
         //Move start to a non-deleted node.
-        while(start != NULL && start->deleted == 1)
+        while (start != NULL && start->deleted == 1)
         {
             puts("next");
             start = start->next;
         }
         node *end = start->next;
-        printf("END = %d\n",end->ID);
+
+        printf("END = %d\n", end->ID);
         printem(nodes);
         puts("\n\n");
-        while(end != NULL)//TODO: break this if count < 3
+        while (end != NULL)     //TODO: break this if count < 3
         {
-            if(end->deleted == 0)
+            if (end->deleted == 0)
             {
                 printf("start: %d del: %d\n", start->ID, start->deleted);
                 printf("end: %d del: %d\n", end->ID, end->deleted);
                 startPaths(start, end);
                 visitClear(nodes);
-                
+
             }
             end = end->next;
         }

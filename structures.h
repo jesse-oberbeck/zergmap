@@ -1,18 +1,18 @@
 typedef struct Node
 {
-    struct Node *next;//Linked list of nodes.
-    struct Node *left;//Tree navigation.
-    struct Node *right;//Tree navigation.
+    struct Node *next;          //Linked list of nodes.
+    struct Node *left;          //Tree navigation.
+    struct Node *right;         //Tree navigation.
     int HP;
     int MAXHP;
     int ID;
     double lat;
     double lon;
     double alt;
-    int visited;//For pathing.
-    int deleted;//Psuedo delete using bin flag.
-    struct Edge *connected;//Array of pointers to nodes connected to this node.
-}node;
+    int visited;                //For pathing.
+    int deleted;                //Psuedo delete using bin flag.
+    struct Edge *connected;     //Array of pointers to nodes connected to this node.
+} node;
 
 typedef struct Edge
 {
@@ -154,14 +154,14 @@ uint32_t reverseConvert32(
 void zerg1Decode(
     FILE * words,
     struct ZergHeader *zh,
-    node *nodes);
+    node * nodes);
 
 void zerg2Decode(
     FILE * words);
 
 void zerg3Decode(
     FILE * words,
-    node *nodes,
+    node * nodes,
     int id,
     int *nodeCount);
 

@@ -89,7 +89,7 @@ processFile(
 
     fread(ph, sizeof(struct PcapHeader), 1, words);
     fread(eh, sizeof(struct EthernetHeader), 1, words);
-    if(eh->Etype == -8826 )
+    if (eh->Etype == -8826)
     {
         fseek(words, 40, SEEK_CUR);
     }
@@ -119,7 +119,7 @@ void
 zerg1Decode(
     FILE * words,
     struct ZergHeader *zh,
-    node *nodes)
+    node * nodes)
 {
     /*Decoder for "status" type packets. Pulls out and prints values. */
 
@@ -131,6 +131,7 @@ zerg1Decode(
     char *message = calloc(nameLen + 1, 1);
     int hp = ntohl(st->HP) >> 8;
     int maxhp = ntohl(st->MaxHP) >> 8;
+
     fread(message, nameLen, 1, words);
     printf("Name: %s\n", message);
     printf("HP: %d/%d\n", hp, maxhp);
@@ -149,10 +150,11 @@ zerg1Decode(
     int binSpeed = ntohl(st->Speed);
     double speed = convert32(binSpeed);
 
-    
+
     //Status update to nodes.
     int processedID = ntohl(zh->Did) >> 16;
     node *new = addStatus(hp, maxhp, processedID);
+
     packetTree(nodes, new);
     //Status update to nodes.
 
@@ -291,7 +293,7 @@ seconds(
 void
 zerg3Decode(
     FILE * words,
-    node *nodes,
+    node * nodes,
     int id,
     int *nodeCount)
 {
@@ -304,25 +306,26 @@ zerg3Decode(
 
     double latitude = convert64(be64toh(gps->Latit));
     double longitude = convert64(be64toh(gps->Longit));
-/*
-    if (latitude > 0)
-    {
-        printf("Latitude: %.9f deg. N\n", latitude);
-    }
-    else
-    {
-        printf("Latitude: %.9f deg. S\n", fabs(latitude));
-    }
 
-    if (longitude > 0)
-    {
-        printf("Longitude: %.9f deg. E\n", longitude);
-    }
-    else
-    {
-        printf("Longitude: %.9f deg. W\n", fabs(longitude));
-    }
-*/
+    /*
+     * if (latitude > 0)
+     * {
+     * printf("Latitude: %.9f deg. N\n", latitude);
+     * }
+     * else
+     * {
+     * printf("Latitude: %.9f deg. S\n", fabs(latitude));
+     * }
+     * 
+     * if (longitude > 0)
+     * {
+     * printf("Longitude: %.9f deg. E\n", longitude);
+     * }
+     * else
+     * {
+     * printf("Longitude: %.9f deg. W\n", fabs(longitude));
+     * }
+     */
     uint32_t altitudeBin = ntohl(gps->Altit);
     float altitude = convert32(altitudeBin);
 
@@ -340,15 +343,17 @@ zerg3Decode(
     //printf("Speed: %.0fkm/h\n", speed * 3.6);   //3.6 to convert m/s to km/h.
     //printf("Accuracy: %.0fm\n", accuracy);
 
-//  Build node  //
+    //  Build node  //
     int processedID = ntohl(id) >> 16;
+
     //printf("BUILDING NODE: %d\n \n", processedID);
     node *new = buildNode(latitude, longitude, altitude * 1.8288, processedID);
+
     *nodeCount += 1;
     insert(&nodes, new);
     packetTree(nodes, new);
     //findAdjacencies(nodes, new);
-//  Build node  //
+    //  Build node  //
     free(gps);
 }
 
@@ -363,12 +368,14 @@ processZergHeader(
     fread(zh, sizeof(struct ZergHeader), 1, words);
     int zergType = ntohl(zh->Type) >> 24;
     int totalLen = ntohl(zh->TotalLen) >> 8;
+
     if ((zergType < 0) || (zergType > 3))
     {
         fprintf(stderr, "Invalid packet detected.\n");
         exit(1);
     }
     int sequence = ntohs(zh->Sequence);
+
     if ((sequence < 0) || (sequence > 65535))
     {
         fprintf(stderr, "!!!Invalid packet detected.\n");
