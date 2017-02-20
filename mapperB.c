@@ -399,7 +399,7 @@ node *findShortest(node *n, node *end)
     }
     return(path);
 }
-
+/*
 void startPaths(node* start, node *end)
 {
     printf("END ID: %d\n", end->ID);
@@ -421,72 +421,127 @@ void startPaths(node* start, node *end)
     while(e != NULL)
     {
         int c = checkDistance(e->node, end);
-        if(c < dist1)
+        if(c == 0)
+        {
+            puts("END NEXT TO START");
+            ++paths;
+        }
+        else if(c < dist1 && dist1 < 999999 && c < dist2)
+        {
+            dist2 = dist1;
+            path2 = path1;
+            dist1 = c;
+            path1 = e->node;
+            printf("PATH 1: %d DIST: %d &\n", path1->ID, dist1);
+            printf("PATH 2: %d DIST: %d\n", path2->ID, dist2);
+        }
+        else if(c < dist1)
         {
             dist1 = c;
             path1 = e->node;
+            printf("PATH 1: %d DIST: %d\n", path1->ID, dist1);
         }
         else if(c < dist2)
         {
             dist2 = c;
             path2 = e->node;
+            printf("PATH 2: %d DIST: %d\n", path2->ID, dist2);
         }
         e = e->next;
     }
-    path1->visited = 1;
-    if(!path2)
+    if(endProbe(path1, end))
     {
-        puts("Not enough paths...");
+        puts("path1 next to end");
+        ++paths;
+    }
+    if(path2 != NULL && endProbe(path2, end))
+    {
+        puts("path1 next to end");
+        ++paths;
+    }
+    if(paths > 1)
+    {
+        printf("PATHS FOUND AT BEGINNING\n");
         return;
     }
+//If a second path was not found, exit.
+    if(path2 == NULL)
+    {
+        puts("!!!!!!!!!!!!!!!!!!!!Path 2 is null...");
+        return;
+    }
+    path1->visited = 1;
     path2->visited = 1;
 
-    while(collisionPoint == NULL && paths < 2)//While collision has not occurred and both paths have not been found.
+
+
+//While collision has not occurred and both paths have not been found.
+    while(collisionPoint == NULL && paths < 2)
     {
-        if(endProbe(path1, end))
+        puts(" ");
+        //If path 1 is the end, or is next to the end, increment paths.
+        if(endProbe(path1, end) || path1->ID == end->ID)
         {
             ++paths;
-            puts("path found!");
+            puts("path1 found!");
         }
-        if(endProbe(path2, end))
+        //If path2 is the end, or is next to the end, increment paths.
+        if(endProbe(path2, end) || path2->ID == end->ID)
         {
             ++paths;
-            puts("path found!");
+            puts("path2 found!");
         }
-        //Check for common nodes each time they advance.
+        if(paths > 1)
+        {
+            puts("PATHING DONE");
+            return;
+        }
+
+
+//Check for common nodes each time they advance.
         node *common = commonCheck(path1, path2);
+        if(common != NULL)
+        {printf("p1: %d p2: %d common: %d\n", path1->ID, path2->ID, common->ID);}
 
 //Choose next for path1
         edge *edge1 = path1->connected;
         path1->visited = 1;
         node *path1check = findShortest(path1, end);//Closest non visited node.
         node *alternate1 = NULL;
+//Finds an alternate path. May not be closest to the end, but isn't shared.
         while(edge1 != NULL)
         {
-            if(edge1->node != common && edge1->node != path1check)
+            //Find a node that is not a common node, and not the shortest node.
+            if(edge1->node != common && edge1->node != path1check && edge1->node->visited == 0)
             {
                 alternate1 = edge1->node;
             }
             edge1 = edge1->next;
         }
         //If the route closest to end is not shared, take it.
-        if(path1check != common && path1check != NULL)
+        if(path1check != common && path1check != NULL && path1check->visited == 0)
         {
+            puts("first option");
             path1 = path1check;
         }
+        //If an alternate was found, 
         else if(alternate1 != NULL)
         {
+            puts("alternate");
             path1 = alternate1;
         }
         else if(common != NULL && common->visited == 0)
         {
+            puts("common");
             path1 = common;
         }
         else
         {
             collisionPoint = path1;
+            printf("COLLISION: %d\n", collisionPoint->ID);
         }
         path1->visited = 1;
+        printf("path1: %d\n", path1->ID);
 
 
 //Choose next for path2
@@ -517,9 +572,11 @@ void startPaths(node* start, node *end)
         }
         else
         {
-            collisionPoint = path1;
+            collisionPoint = path2;
+            printf("COLLISION: %d\n", collisionPoint->ID);
         }
         path2->visited = 1;
+        printf("path2: %d\n", path2->ID);
     }
     if(paths > 1)
     {
@@ -532,13 +589,166 @@ void startPaths(node* start, node *end)
         return;
     }
 }
+*/
+void
+destroy(
+    node * root)
+{
+    if (root == NULL)
+        return;
+
+    destroy(root->left);
+    destroy(root->right);
+    edge *e = root->connected;
+    while(e != NULL)
+    {
+        edge *temp = e->next;
+        free(e);
+        e = temp;
+    }
+    free(root);
+}
 
 
 
 
+//If path is end, or next to end, don't run the following function.
+node * checkPath(node *path, node *end, node *common)
+{
+
+    if(path == NULL)
+    {
+        return(NULL);
+    }
+
+    path->visited = 1;
+    node *shortPath = findShortest(path, end);
+    node *alternate = NULL;
+    edge *edgeCur = path->connected;
+//Find alternate.
+    while(edgeCur != NULL)
+    {
+        //Find a node that is not a common node, and not the shortest node.
+        if(edgeCur->node != common && edgeCur->node != shortPath && edgeCur->node->visited == 0)
+        {
+            alternate = edgeCur->node;
+        }
+        edgeCur = edgeCur->next;
+    }
+
+    if(shortPath != common && shortPath->visited == 0 && shortPath != NULL)
+    {
+        puts("shortest");
+        return(shortPath);
+    }
+    else if(alternate != NULL)
+    {
+        puts("alternate");
+        return(alternate);
+    }
+    else if(common != NULL && common->visited == 0)
+    {
+        puts("common");
+        return(common);
+    }
+    else
+    {
+        puts("collision");
+        return(NULL);
+    }
+}
 
 
+void startPaths(node* start, node *end)
+{
+    node *collisionPoint = NULL;
+    node *path1 = NULL;
+    int dist1 = 999999;//Arbitrary high placeholder.
 
+    node *path2 = NULL;
+    int dist2 = 999999;
+
+    //Increment when a path reaches end.
+    int paths = 0;
+    edge *e = start->connected;
+
+//Find the two paths from start closest to the end point.
+    while(e != NULL)
+    {
+        int c = checkDistance(e->node, end);
+        if(c == 0)
+        {
+            puts("END NEXT TO START");
+            ++paths;
+        }
+        else if(c < dist1)
+        {
+            dist2 = dist1;
+            path2 = path1;
+            dist1 = c;
+            path1 = e->node;
+        }
+        e = e->next;
+    }
+    if(endProbe(path1, end))
+    {
+        puts("path1 next to end");
+        ++paths;
+    }
+    if(path2 != NULL && endProbe(path2, end))
+    {
+        puts("path1 next to end");
+        ++paths;
+    }
+    if(paths > 1)
+    {
+        printf("PATHS FOUND AT BEGINNING\n");
+        return;
+    }
+
+    while(collisionPoint == NULL && paths < 2)
+    {
+        node *common = NULL;
+        if(path1 == NULL && path2 == NULL)
+        {
+            puts("-----No paths-----");
+            return;
+        }
+
+        else if(path1 != NULL && path2 != NULL)
+        {
+            common = commonCheck(path1, path2);
+        }
+
+        if(path1 != NULL)
+        {
+            path1 = checkPath(path1, end, common);
+            if(path1 != NULL)
+            {
+                if(path1 == end || endProbe(path1, end))
+                {
+                    ++paths;
+                }
+            path1->visited = 1;
+            }
+        }
+
+        if(path2 != NULL)
+        {
+            path2 = checkPath(path2, end, common);
+            if(path2 != NULL)
+            {
+                if(path2 == end || endProbe(path2, end))
+                {
+                    ++paths;
+                }
+            path2->visited = 1;
+            }
+        }
+        
+    }
+    puts("Paths found");
+}
 
 
 

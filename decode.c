@@ -109,15 +109,15 @@ main(
         }
         current_pos = ftell(words);
         puts("~");
-    //free(zh);
-    //free(c);
-    //fclose(words);
+    free(zh);
+    free(c);
+    fclose(words);
     }
-    }//////////////////////////////////////////////////////////////////////////////////
+    }
     puts("PRINTEM!!");
-    //printf("ROOT: %p\n", nodes);
-    node *base = calloc(sizeof(node), 1);
-    nodes = nodes->next;//TODO: FIGURE OUT WHY THE FIRST NODE IS EMPTY
+    node *base = NULL;
+    node *seed = nodes;
+    nodes = nodes->next;
     base = nodes;
     while(base->next != NULL)
     {
@@ -142,6 +142,7 @@ main(
         node *end = start->next;
         printf("END = %d\n",end->ID);
         printem(nodes);
+        puts("\n\n");
         while(end != NULL)//TODO: break this if count < 3
         {
             if(end->deleted == 0)
@@ -149,15 +150,17 @@ main(
                 printf("start: %d del: %d\n", start->ID, start->deleted);
                 printf("end: %d del: %d\n", end->ID, end->deleted);
                 startPaths(start, end);
+                visitClear(nodes);
                 
             }
             end = end->next;
         }
     }
     printem(nodes);
+    free(seed);
     puts("PRINT TREE");
     printTree(nodes);
     printf("FIRST NODE: %d\n", nodes->ID);
-
+    destroy(nodes);
     return (0);
 }
