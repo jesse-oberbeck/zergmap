@@ -121,8 +121,18 @@ main(
     puts("PRINTEM!!");
     node *base = NULL;
     node *seed = nodes;
+    if(nodes->next == NULL)
+    {
+        puts("Not enough nodes.");
+        exit(1);
+    }
     nodes = nodes->next;
     base = nodes;
+    if(base->next == NULL)
+    {
+        puts("Not enough nodes.");
+        exit(1);
+    }
     while(base->next != NULL)
     {
         findAdjacencies(base, base);

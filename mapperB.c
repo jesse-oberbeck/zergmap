@@ -20,6 +20,8 @@ printTree(
 
 node * packetTree(node *tree, node *node)
 {
+//Insert a node into a tree structure, adjusting HP values if same ID
+//is found.
     printf("NODE HP: %d/%d ID: %d\n", node->HP, node->MAXHP, node->ID);
     if(tree == NULL)
     {
@@ -59,6 +61,7 @@ node * packetTree(node *tree, node *node)
 
 double haversine(double th1, double ph1, double th2, double ph2)
 {
+//Distance between two points on a globe.
 	double dx, dy, dz;
 	ph1 -= ph2;
 	ph1 *= (3.1415926536 / 180), th1 *= (3.1415926536 / 180), th2 *= (3.1415926536 / 180);
@@ -100,9 +103,9 @@ double checkAdjacency(node *a, node *b)
 
 void insert(node **nodes, node *n)
 {
+//Adds a node to the set of nodes.
     if(*nodes == NULL)//If it's the first node.
     {
-        //printf("!!!!!!!!!!!!!!!!!FIRST NODE %d\n", n->ID);
         *nodes = n;
         return;
     }
@@ -140,8 +143,6 @@ void findAdjacencies(node *cur, node *new)
     while(cur != NULL)//While not at the end of the set of existing nodes.
     {
 
-        //edge *edgeCursor = cur->connected;//is now the first edge for the node, or NULL
-        //edge *edgeCursorNew = new->connected;//Same, but for the new node.
         double weight = checkAdjacency(cur, new);//Find weight.
         //printf("DISTANCE: %f\n", weight);
 
@@ -171,6 +172,7 @@ void findAdjacencies(node *cur, node *new)
 
 node *addStatus(int hp, int maxhp, int id)
 {
+//Builds a node with just status information.
     node *new = calloc(sizeof(node), 1);
     new->HP = hp;
     new->MAXHP = maxhp;
@@ -180,6 +182,7 @@ node *addStatus(int hp, int maxhp, int id)
 
 node *buildNode(double lat, double lon, float alt, int id)
 {
+//Builds a new node.
     printf("NEW NODE LAT: %f LON: %f ALT: %f\n", lat, lon, alt);
     node *new = calloc(sizeof(node), 1);
     new->lat = lat;
@@ -192,6 +195,7 @@ node *buildNode(double lat, double lon, float alt, int id)
 
 void printem(node *cur)
 {
+//Prints nodes and their adjacencies.
     int count = 0;
     while(cur != NULL)
     {
@@ -212,6 +216,7 @@ void printem(node *cur)
 
 void trimLeaves(node *root, int *nodeCount)
 {
+//Cyclically trims nodes with only one adjacency (leaves).
     puts("TL CALLED");
     node *start = root;
     int noLeaf = 1;
@@ -268,6 +273,7 @@ void trimLeaves(node *root, int *nodeCount)
 
 node *leastAdj(node *root)
 {
+//Finds the node with the least number of adjacencies. Not used.
     edge *edgeCur = NULL;
     node *least = calloc(sizeof(node), 1);
     int leastAdj = 0;
@@ -320,6 +326,7 @@ void
 visitClear(
     node * root)
 {
+//Clears visited status from all nodes.
     if (root == NULL)
     {
         return;
@@ -331,34 +338,9 @@ visitClear(
 }
 
 
-void findPath(node *root)
-{
-    node *start = leastAdj(root);//Node with least adjacencies is start point.
-    node *end = root;
-    while(end != NULL)
-    {
-        if(end == start)
-        {
-            end = end->next;//Keep from trying to find paths from start to itself.
-        }
-        //DO STUFF
-        end = end->next;
-    }
-
-
-    node *shortest = NULL;
-    shortest = shortestRoute(root);//Find shortest route from starting node.
-    printf("SCHRUTE: %d\n", shortest->ID);
-    shortest->visited = 1;
-    findPath(shortest);
-    free(start);
-    free(shortest);
-}
-
-//UNDER CONSTRUCTION//
 int endProbe(node *n, node *end)
 {
-    //Tests if node n is connected to node end.
+//Tests if node n is connected to node end.
     int found = 0;
     edge *e = n->connected;
     while(e != NULL)
@@ -374,7 +356,7 @@ int endProbe(node *n, node *end)
 
 node *commonCheck(node *a, node *b)
 {
-    //Check two nodes for common edges, returns the common edge or NULL.
+//Check two nodes for common edges, returns the common edge or NULL.
     edge *ae = a->connected;
     edge *be = b->connected;
     while(ae != NULL)
@@ -394,6 +376,7 @@ node *commonCheck(node *a, node *b)
 
 node *findShortest(node *n, node *end)
 {
+//Find the edge which brings the node closest to the end point.
     node *path = NULL;
     int dist = 999999;
     edge *e = n->connected;
@@ -415,6 +398,7 @@ void
 destroy(
     node * root)
 {
+//Destroy all nodes based on their tree formation.
     if (root == NULL)
         return;
 
@@ -429,9 +413,6 @@ destroy(
     }
     free(root);
 }
-
-
-
 
 //If path is end, or next to end, don't run the following function.
 node * checkPath(node *path, node *end, node *common)
@@ -482,12 +463,13 @@ node * checkPath(node *path, node *end, node *common)
 
 void startPaths(node* start, node *end)
 {
+//Starts two concurrent paths from the start node, looking for the end node,
+//And manages them throughout their run.
     node *collisionPoint = NULL;
     node *path1 = NULL;
     int dist1 = 999999;//Arbitrary high placeholder.
 
     node *path2 = NULL;
-    //int dist2 = 999999;
 
     //Increment when a path reaches end.
     int paths = 0;
@@ -504,7 +486,6 @@ void startPaths(node* start, node *end)
         }
         else if(c < dist1)
         {
-            //dist2 = dist1;
             path2 = path1;
             dist1 = c;
             path1 = e->node;

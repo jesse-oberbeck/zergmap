@@ -129,7 +129,6 @@ main(
     }
     puts("trim leaves...");
     trimLeaves(nodes, &nodeCount);
-    //findPath(nodes);
     node *start = nodes;
     if(nodeCount > 2)
     {
