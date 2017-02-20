@@ -89,7 +89,7 @@ processFile(
 
     fread(ph, sizeof(struct PcapHeader), 1, words);
     fread(eh, sizeof(struct EthernetHeader), 1, words);
-    if (eh->Etype == -8826)
+    if (eh->Etype == -8826)//Untranslated value for ethernet type when IPv6.
     {
         fseek(words, 40, SEEK_CUR);
     }
