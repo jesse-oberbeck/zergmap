@@ -3,8 +3,6 @@
 #include <math.h>
 #include <stdint.h>
 
-//TODO: Adjust build nodes to be usable for status packets, incorporate into status type packet handler.
-
 void
 printTree(
     node * root)
