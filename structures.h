@@ -1,8 +1,8 @@
 typedef struct Node
 {
-    struct Node *next;
-    struct Node *left;
-    struct Node *right;
+    struct Node *next;//Linked list of nodes.
+    struct Node *left;//Tree navigation.
+    struct Node *right;//Tree navigation.
     int HP;
     int MAXHP;
     int ID;
@@ -11,7 +11,7 @@ typedef struct Node
     double alt;
     int visited;//For pathing.
     int deleted;//Psuedo delete using bin flag.
-    struct Edge *connected;//Array of pointers to nodes connected to latis node.
+    struct Edge *connected;//Array of pointers to nodes connected to this node.
 }node;
 
 typedef struct Edge
